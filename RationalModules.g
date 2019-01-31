@@ -255,7 +255,7 @@ __RationalModules__BasesMinimalSubmodulesOverRationals := function(g_perm, prime
 			Add(primes, p);;
 #						Print("\n?\n");
 		else
-			Print("\n?!\n");
+#			Print("\n?!\n");
 		fi;
 		if Size(Set(List(bases, Size)))<>1 then
 #			Print(List(bases, Size),"x\c");
