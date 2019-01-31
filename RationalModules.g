@@ -344,7 +344,7 @@ RepeatBasesMinimalSubmodulesOverRationals := function(g_perm)
   73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 
   179, 181, 191, 193, 197, 199];;
 	max := 100;
-	for i in [1 .. 1000] do
+	for i in [1 .. 10000] do
 		out := __RationalModules__BasesMinimalSubmodulesOverRationals(g_perm, Filtered(primes, t -> Gcd(t,Order(g_perm))=1), max);
 		if out <> fail then
 			return out;
@@ -357,7 +357,29 @@ end;
 
 
 
+IsRationalModule := function(gp, basis)
+	local gens, g, moved, V, i;
+	gens:=GeneratorsOfGroup(gp);;
+	V := VectorSpace(Rationals, basis);
+	for g in gens do
+		for i in [1 .. Size(basis)] do
+			moved := Permuted(basis[i], g);;
+			if not moved in V then
+				return false;
+			fi;
+		od;
+	od;
+	return true;
+end;
 
+
+#IsRationalModule := function(gp, basis)
+#	local gens, g;
+#		if not ForAll(Union(Orbits(gp, basis, Permuted)), t -> t in VectorSpace(Rationals, basis)) then
+#			return false;
+#		fi;
+#	return true;
+#end;
 
 
 
