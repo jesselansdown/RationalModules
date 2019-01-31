@@ -143,6 +143,67 @@ __RationalModules__BasesMinimalSubmodulesOverRationals := function(g_perm, prime
 end;
 
 
+
+
+
+
+
+__RationalModules__BasesMinimalSubmodulesOverRationals := function(g_perm, primes, max)
+	local bases, p, m, subs, subs2, b, basis, out, a, bases2, i, dims, subs3, iter, next, k;
+	# TODO:
+	# Put a check to discard submodules which don't properly decompose.
+	# Put a check that the submodules correspond to each other - sort by dimension, plus additional checks
+	# Put a check the output are indeed submodules
+	# Return in the format which MTX uses.
+	bases:=[];
+	for p in primes do
+		m:=PermutationGModule(g_perm, GF(p));
+		subs:=MTX.BasesMinimalSubmodules(m);
+		subs2:=[];;
+		for b in subs do
+			basis := EchelonMat(__RationalModules__ConvertModuleBasis(b, p)).vectors;;
+			Add(subs2, basis);;
+		od;
+		Add(bases, subs2);
+		if Size(Set(List(bases, Size)))<>1 then
+			Print(List(bases, Size),"x\c");
+			return fail;
+		fi;
+	od;
+	Print(List(bases, Size),"+\c");
+	out:=[];;
+	dims:=Set(List(bases[1], Size));;
+	subs3:=[];
+	for i in dims do
+		Add(subs3, List(bases, t -> Filtered(t, x -> Size(x)=i)));
+	od;
+	for i in [1 .. Size(subs3)] do
+		d := Size(subs3[i][1]);;
+		for j in [1 .. d] do
+			iter := IteratorOfTuples( [1 .. Size(subs3[i])], Size(primes));
+			while not IsDoneIterator(iter) do
+				next := NextIterator(iter);;
+				bases2 := subs3[i]{next};;
+				bases2 := List(bases2, t -> t[1]);;
+				a := __RationalModules__ModuleOverRationals(bases2, primes, max);;
+				if a <> fail then
+					Add(out, a);;
+					for k in [1.. Size(subs3[i])] do
+						Remove(subs3[i][k], next[k]);
+					od;
+					break;
+				fi;
+			od;
+			if a = fail then
+				return fail;
+			fi;
+		od;
+	od;
+	return out;
+end;
+
+
+
 BasesMinimalSubmodulesOverRationals := function(g_perm)
 	local primes, max, primeoptions, out;
 	# TODO:
@@ -162,7 +223,7 @@ BasesMinimalSubmodulesOverRationals := function(g_perm)
 		[ 100000000003, 100000000019, 100000000057 ],
 		[ 1000000000039, 1000000000061, 1000000000063 ]
 	];;
-	max := 1000;
+	max := 100;
 	for primes in primeoptions do
 		#max:=max*10;;
 		out := __RationalModules__BasesMinimalSubmodulesOverRationals(g_perm, primes, max);
