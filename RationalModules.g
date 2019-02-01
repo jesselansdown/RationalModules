@@ -432,7 +432,7 @@ end;
 # end;
 
 
-
+	
 BruteForce := function(g_perm, primes, max)
 
 	local output, submodules, p, m, subs, i, j, k, bases, temp;
@@ -490,7 +490,7 @@ end;
 
 BruteForce := function(g_perm, primes, max)
 
-	local output, submodules, p, m, subs, i, j, k, bases, temp;
+	local output, submodules, p, m, subs, i, j, k, bases, temp, initials;
 
 	output:=[];;
 	# Check the validity of primes first? ie. Gcd and number of irreducibles?
@@ -511,7 +511,7 @@ BruteForce := function(g_perm, primes, max)
 	temp:=fail;
 	for m in [1 .. Size(initials)] do
 		for i in [1 .. Size(initials[m])] do
-			Print(m,"/", Size(initials), " - ", i,"/", Size(initials[m]), "\n");
+#			Print(m,"/", Size(initials), " - ", i,"/", Size(initials[m]), "\n");
 			for j in [1 .. Size(submodules[2])] do
 				for k in [1 .. Size(submodules[3])] do
 					if Size(initials[m][i]) = Size(submodules[2][j]) and Size(submodules[2][j]) = Size(submodules[3][k]) then
@@ -523,8 +523,8 @@ BruteForce := function(g_perm, primes, max)
 							if IsRationalModule(g_perm, temp) then
 								Add(output, temp);;
 								output:=Set(output);;
-								Print(Size(output),"+\c");
-								Print("\n", List(output, Size), "\n");
+#								Print(Size(output),"+\c");
+#								Print("\n", List(output, Size), "\n");
 								break;
 							fi;
 						fi;
@@ -544,10 +544,12 @@ BruteForce := function(g_perm, primes, max)
 		od;
 		temp:=fail;
 	od;
-	if Size(output)=Size(initials) then
-		Print("Found a representative for all (i think...)\n");
-	else
-		Print("Not all representatives found...\n", "Missing ", Size(initials) - Size(output), "\n");
-	fi;
+#	if Size(output)=Size(initials) then
+#		Print("Found a representative for all (i think...)\n");
+#	else
+#		Print("Not all representatives found...\n", "Missing ", Size(initials) - Size(output), "\n");
+#	fi;
 	return [output, Size(initials) - Size(output)];
 end;
+
+
