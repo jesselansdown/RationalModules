@@ -28,12 +28,12 @@ __RationalModules__pullbackval := function(x, d, p)
 	return x*d mod p;
 end;
 
-__RationalModules__pullback := function(undetermined, prime, max)
+__RationalModules__pullback := function(undetermined, primes, max)
 	local n, i, s;;
 	n := Size(undetermined);
 	for i in [1 .. max] do
 		if ForAll(primes, t -> Gcd(t, i)=1) then
-			s := List([1..n], t -> __RationalModules__pullbackval(undetermined[t], i, prime[t] ));
+			s := List([1..n], t -> __RationalModules__pullbackval(undetermined[t], i, primes[t] ));
 		fi;
 		if Size(Set(s))=1 then
 			return s[1]/i;
@@ -41,7 +41,7 @@ __RationalModules__pullback := function(undetermined, prime, max)
 	od;
 	for i in [1 .. max] do
 		if ForAll(primes, t -> Gcd(t, i)=1) then
-			s := List([1..n], t -> __RationalModules__pullbackval(-undetermined[t], i, prime[t] ));
+			s := List([1..n], t -> __RationalModules__pullbackval(-undetermined[t], i, primes[t] ));
 		fi;
 		if Size(Set(s))=1 then
 			return -s[1]/i;
@@ -340,8 +340,8 @@ RepeatBasesMinimalSubmodulesOverRationals := function(g_perm)
 	local primes, max, primeoptions, out, i;
 	# TODO: Instead of taking "component" repeatedly from HomogeneousComponents, loop through each of the equivilent modules exhaustively.
 	primes:=
-	 [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
-  73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 
+#	 [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
+  [73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 
   179, 181, 191, 193, 197, 199];;
 	max := 100;
 	for i in [1 .. 10000] do
@@ -430,3 +430,124 @@ end;
 # 	out := __RationalModules__BasesMinimalSubmodulesOverRationals(g_perm, primes, max);
 # 	return out;
 # end;
+
+
+
+BruteForce := function(g_perm, primes, max)
+
+	local output, submodules, p, m, subs, i, j, k, bases, temp;
+
+	output:=[];;
+	# Check the validity of primes first? ie. Gcd and number of irreducibles?
+	submodules := [];;
+#	m:=PermutationGModule(g_perm, GF(primes[1]));;
+#	subs:=MTX.HomogeneousComponents(m);;
+#	subs:=List(subs, t -> t.component[1]);;
+#	Add(submodules, subs);;
+#	for p in primes{[2.. Size(primes)]} do
+	for p in primes do
+		m:=PermutationGModule(g_perm, GF(p));;
+		subs:=MTX.BasesMinimalSubmodules(m);;
+		Add(submodules, subs);;
+	od;
+	# Put only a homogeneous component of the first prime in, and then in the bottom loops, stop once it is found
+	# Make the assumption of only 3 primes to begin with...
+	temp:=fail;
+	for i in [1 .. Size(submodules[1])] do
+		Print(i,"/", Size(submodules[1]), "\n");
+		for j in [1 .. Size(submodules[2])] do
+			for k in [1 .. Size(submodules[3])] do
+				if Size(submodules[1][i]) = Size(submodules[2][j]) and Size(submodules[2][j]) = Size(submodules[3][k]) then
+					bases:=[submodules[1][i], submodules[2][j], submodules[3][k]];
+					bases := List(bases, t -> EchelonMat(t).vectors);;
+					bases:=List([1..Size(primes)], t -> __RationalModules__ConvertModuleBasis(bases[t], primes[t]));;
+					temp:=__RationalModules__ModuleOverRationals(bases, primes, max);;
+					if temp <> fail then
+						if IsRationalModule(g_perm, temp) then
+							Add(output, temp);;
+							output:=Set(output);;
+							Print(Size(output),"+\c");
+							Print("\n", List(output, Size), "\n");
+							break;
+						fi;
+					fi;
+				fi;
+			od;
+			if temp <> fail then
+				if IsRationalModule(g_perm, temp) then
+					break;
+				fi;
+			fi;
+			Print(Size(output),".\c");
+		od;
+		temp:=fail;
+	od;
+	return output;
+end;
+
+
+
+
+BruteForce := function(g_perm, primes, max)
+
+	local output, submodules, p, m, subs, i, j, k, bases, temp;
+
+	output:=[];;
+	# Check the validity of primes first? ie. Gcd and number of irreducibles?
+	submodules := [[]];;
+	m:=PermutationGModule(g_perm, GF(primes[1]));;
+	subs:=MTX.HomogeneousComponents(m);;
+	initials := List(subs, t -> Union(List(t.images, x -> x.component[1]), [t.component[1]]));
+	initials := List(initials, t -> Set(List(t, x -> EchelonMat(x).vectors)));
+	for p in primes{[2.. Size(primes)]} do
+#	for p in primes do
+		m:=PermutationGModule(g_perm, GF(p));;
+		subs:=MTX.BasesMinimalSubmodules(m);;
+		subs := Set(List(subs, t -> EchelonMat(t).vectors));;
+		Add(submodules, subs);;
+	od;
+	# Put only a homogeneous component of the first prime in, and then in the bottom loops, stop once it is found
+	# Make the assumption of only 3 primes to begin with...
+	temp:=fail;
+	for m in [1 .. Size(initials)] do
+		for i in [1 .. Size(initials[m])] do
+			Print(m,"/", Size(initials), " - ", i,"/", Size(initials[m]), "\n");
+			for j in [1 .. Size(submodules[2])] do
+				for k in [1 .. Size(submodules[3])] do
+					if Size(initials[m][i]) = Size(submodules[2][j]) and Size(submodules[2][j]) = Size(submodules[3][k]) then
+						bases:=[initials[m][i], submodules[2][j], submodules[3][k]];
+#						bases := List(bases, t -> EchelonMat(t).vectors);;
+						bases:=List([1..Size(primes)], t -> __RationalModules__ConvertModuleBasis(bases[t], primes[t]));;
+						temp:=__RationalModules__ModuleOverRationals(bases, primes, max);;
+						if temp <> fail then
+							if IsRationalModule(g_perm, temp) then
+								Add(output, temp);;
+								output:=Set(output);;
+								Print(Size(output),"+\c");
+								Print("\n", List(output, Size), "\n");
+								break;
+							fi;
+						fi;
+					fi;
+				od;
+				if temp <> fail then
+					if IsRationalModule(g_perm, temp) then
+						break;
+					fi;
+				fi;
+			od;
+			if temp <> fail then
+				if IsRationalModule(g_perm, temp) then
+					break;
+				fi;
+			fi;
+		od;
+		temp:=fail;
+	od;
+	if Size(output)=Size(initials) then
+		Print("Found a representative for all (i think...)\n");
+	else
+		Print("Not all representatives found...\n", "Missing ", Size(initials) - Size(output), "\n");
+	fi;
+	return [output, Size(initials) - Size(output)];
+end;
