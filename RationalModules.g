@@ -553,3 +553,98 @@ BruteForce := function(g_perm, primes, max)
 end;
 
 
+BruteForce := function(g_perm, primes, max)
+
+	local output, submodules, p, m, subs, i, j, k, bases, temp, initials;
+
+	output:=[];;
+	# Check the validity of primes first? ie. Gcd and number of irreducibles?
+	submodules := [[]];;
+	m:=PermutationGModule(g_perm, GF(primes[1]));;
+	subs:=MTX.HomogeneousComponents(m);;
+	initials := List(subs, t -> Union(List(t.images, x -> x.component[1]), [t.component[1]]));
+	initials := List(initials, t -> Set(List(t, x -> EchelonMat(x).vectors)));
+	for p in primes{[2.. Size(primes)]} do
+#	for p in primes do
+		m:=PermutationGModule(g_perm, GF(p));;
+		subs:=MTX.BasesMinimalSubmodules(m);;
+		subs := Set(List(subs, t -> EchelonMat(t).vectors));;
+		Add(submodules, subs);;
+	od;
+	# Put only a homogeneous component of the first prime in, and then in the bottom loops, stop once it is found
+	# Make the assumption of only 3 primes to begin with...
+	temp:=fail;
+	for m in [1 .. Size(initials)] do
+		for i in [1 .. Size(initials[m])] do
+#			Print(m,"/", Size(initials), " - ", i,"/", Size(initials[m]), "\n");
+			for j in [1 .. Size(submodules[2])] do
+				for k in [1 .. Size(submodules[3])] do
+					if Size(initials[m][i]) = Size(submodules[2][j]) and Size(submodules[2][j]) = Size(submodules[3][k]) then
+						bases:=[initials[m][i], submodules[2][j], submodules[3][k]];
+#						bases := List(bases, t -> EchelonMat(t).vectors);;
+						bases:=List([1..Size(primes)], t -> __RationalModules__ConvertModuleBasis(bases[t], primes[t]));;
+						temp:=__RationalModules__ModuleOverRationals(bases, primes, max);;
+						if temp <> fail then
+							if IsRationalModule(g_perm, temp) then
+								Add(output, temp);;
+								output:=Set(output);;
+#								Print(Size(output),"+\c");
+#								Print("\n", List(output, Size), "\n");
+								break;
+							fi;
+						fi;
+					fi;
+				od;
+				if temp <> fail then
+					if IsRationalModule(g_perm, temp) then
+						break;
+					fi;
+				fi;
+			od;
+			if temp <> fail then
+				if IsRationalModule(g_perm, temp) then
+					break;
+				fi;
+			fi;
+		od;
+		if Size(output) <> m then
+			return fail;
+		fi;
+		temp:=fail;
+	od;
+#	if Size(output)=Size(initials) then
+#		Print("Found a representative for all (i think...)\n");
+#	else
+#		Print("Not all representatives found...\n", "Missing ", Size(initials) - Size(output), "\n");
+#	fi;
+	return output;
+end;
+
+BruteForce2 := function(g_perm, max)
+
+	local primeoptions, primes, out;
+
+#	primeoptions:=[
+#	[3, 5, 7],
+#	[ 11, 13, 17 ],
+#	[ 61, 67, 71 ]
+#	];
+	primeoptions := [
+	[3, 5, 7], 
+	[11, 13, 17], 
+	[19, 23, 29], 
+	[31, 37, 41], 
+	[43, 47, 53], 
+	[59, 61, 67], 
+	[71, 73, 79], 
+	[83, 89, 97]
+	];
+	for primes in primeoptions do
+		out := BruteForce(g_perm, primes, max);;
+		if out <> fail then
+			return out;
+		fi;
+	od;
+	return fail;
+end;
+
